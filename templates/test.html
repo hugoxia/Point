@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>Check</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+<div class="container-fluid" style="padding:50px" id="form_column">
+    <form action="/test" method="post">
+        <div class="row">
+            <div class="col-md-4 col-xs-4 col-sm-5">
+                <div class="input-group input-group-lg">
+                    <span class="input-group-addon" id="sizing-addon1">经纬度:</span>
+                    <input type="text" class="form-control" name="x_y" placeholder="213.1210000,41.0004123"
+                           aria-describedby="sizing-addon1" value="{{ x_y }}">
+
+                </div>
+            </div>
+            <button type="submit" class="btn btn-default btn-lg">提交</button>
+        </div>
+    </form>
+    {% if address == None %}
+    {% else %}
+    <h4>地址:{{ address['name'] }}</h4>
+    <h4>关键字: {{ address['keyword'] }}</h4>
+    {% endif %}
+    <hr>
+
+    <div class="row">
+
+        <div class="col-xs-5 col-sm-5">
+            <fieldset class="form-group">
+                <label for="display"><h3>原数据</h3></label>
+                    <textarea class="form-control" rows="25" name="display_first" placeholder="Readonly input here…"
+                              readonly>
+                        {% if first == None %}
+                            {{ first }}
+                        {% else %}
+                        {% for element in first %}
+                            {{ element }}
+                            {% endfor %}
+                        {% endif %}</textarea>
+            </fieldset>
+        </div>
+        <div class="col-xs-5 col-sm-5">
+            <fieldset class="form-group">
+                <label for="display"><h3>新数据</h3></label>
+                    <textarea class="form-control" rows="25" name="display_second" placeholder="Readonly input here…"
+                              readonly>
+                        {% if second == None %}
+                            {{ second }}
+                        {% else %}
+                        {% for element in second %}
+                            {{ element }}
+                            {% endfor %}
+                        {% endif %}</textarea>
+            </fieldset>
+        </div>
+    </div>
+    <hr>
+</div>
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+</body>
+</html>
