@@ -1,9 +1,10 @@
+#coding=utf-8
 import pickle
 import requests
 from pymongo import MongoClient
 
 client = MongoClient('localhost', 27017)
-collection = client.school.schools
+collection = client.school.all_schools
 pickle_file = open('new_area.pkl', 'rb')
 area = pickle.load(pickle_file)
 
@@ -26,7 +27,7 @@ code = [{'number': 141201, 'mean': '高等院校'},
 #         '2f9fd93a6d483072ae4379dd371a2425'
 #         ]
 
-key = 'fe44aff795f5c287eb070781a3108d09'
+key = '8734a771f5a4a097a43e96d42f1cc393'
 for a in area:
     province = a['province']
     for l in a['lower']:
@@ -40,13 +41,16 @@ for a in area:
                                  '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], 1) + \
                                  '&key=' + key + '&extensions=all'
                     api_result = requests.get(origin_url, headers=headers).json()
+                    if api_result["status"] == '0':
+                        raise Exception(api_result['info'])
+                    else:
+                        pass
                     # if api_result["status"] == '0':
                     #
                     #     if keys.index(key) < 12:
                     #         key = keys[keys.index(key) + 1]
                     #     else:
                     #         print('oh~oh~,key用完了....')
-                    print(api_result)
                     count = int(api_result['count'])
                     if count == 0:
                         pass
@@ -60,6 +64,10 @@ for a in area:
                                   '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], p) + \
                                   '&key=' + key + '&extensions=all'
                             api_result = requests.get(url, headers=headers).json()
+                            if api_result["status"] == '0':
+                                raise Exception(api_result['info'])
+                            else:
+                                pass
                             # if api_result["status"] == '0':
                             #     if keys.index(key) < 12:
                             #         key = keys[keys.index(key) + 1]
@@ -95,6 +103,10 @@ for a in area:
                              '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], 1) + \
                              '&key=' + key + '&extensions=all'
                 api_result = requests.get(origin_url, headers=headers).json()
+                if api_result["status"] == '0':
+                    raise Exception(api_result['info'])
+                else:
+                    pass
                 # if api_result["status"] == '0':
                 #     if keys.index(key) < 12:
                 #         key = keys[keys.index(key) + 1]
@@ -113,6 +125,10 @@ for a in area:
                               '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], p) + \
                               '&key=' + key + '&extensions=all'
                         api_result = requests.get(url, headers=headers).json()
+                        if api_result["status"] == '0':
+                            raise Exception(api_result['info'])
+                        else:
+                            pass
                         # if api_result["status"] == '0':
                         #     if keys.index(key) < 12:
                         #         key = keys[keys.index(key) + 1]

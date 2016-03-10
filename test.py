@@ -12,7 +12,7 @@ from pymongo import MongoClient
 
 app = Flask(__name__)
 client = MongoClient('localhost', 27017)
-collection = client.school.four_gaode_shaanxi
+collection = client.school.schools
 
 
 def rad(d):
@@ -78,7 +78,7 @@ def test():
                     lng2 = re.split(',', result['location'])[1]
 
                     _distance = distance(float(lat1), float(lng1), float(lat2), float(lng2))
-                    if _distance < 10:
+                    if _distance < 5:
                         second.append(result['name'])
                     else:
                         pass
@@ -99,3 +99,4 @@ def test():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=9999)
+
