@@ -3,11 +3,9 @@ import pickle
 from pymongo import MongoClient
 
 client = MongoClient('localhost', 27017)
-collection = client.school.gaode_shaanxi
-new_db = client.school.five_gaode_shaanxi
-origin = collection.find({}, {
-    "province": 1, "city": 1, "district": 1, "name": 1,
-    "type": 1, "address": 1, "location": 1, "_id": 1})
+collection = client.school.schools
+new_db = client.school.new_schools
+origin = collection.find(no_cursor_timeout=True)
 pickle_file = open('schools.pkl', 'rb')
 special = pickle.load(pickle_file)
 

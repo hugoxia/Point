@@ -12,7 +12,7 @@ from pymongo import MongoClient
 
 app = Flask(__name__)
 client = MongoClient('localhost', 27017)
-collection = client.school.schools
+collection = client.school.new_schools
 
 
 def rad(d):
