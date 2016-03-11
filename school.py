@@ -4,7 +4,7 @@ import requests
 from pymongo import MongoClient
 
 client = MongoClient('localhost', 27017)
-collection = client.school.all_schools
+collection = client.school.origin_schools
 pickle_file = open('new_area.pkl', 'rb')
 area = pickle.load(pickle_file)
 
@@ -27,7 +27,7 @@ code = [{'number': 141201, 'mean': '高等院校'},
 #         '2f9fd93a6d483072ae4379dd371a2425'
 #         ]
 
-key = '8734a771f5a4a097a43e96d42f1cc393'
+key = 'fe44aff795f5c287eb070781a3108d09'
 for a in area:
     province = a['province']
     for l in a['lower']:
