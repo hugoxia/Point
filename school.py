@@ -1,12 +1,15 @@
 #coding=utf-8
+import re
 import pickle
 import requests
 from pymongo import MongoClient
 
 client = MongoClient('localhost', 27017)
-collection = client.school.origin_schools
+collection = client.school.gaoxiao_test_schools
 pickle_file = open('new_area.pkl', 'rb')
 area = pickle.load(pickle_file)
+pic_file = open('schools.pkl', 'rb')
+special = pickle.load(pic_file)
 
 code = [{'number': 141201, 'mean': '高等院校'},
         {'number': 141202, 'mean': '中学'},
@@ -27,133 +30,168 @@ code = [{'number': 141201, 'mean': '高等院校'},
 #         '2f9fd93a6d483072ae4379dd371a2425'
 #         ]
 
-key = 'fe44aff795f5c287eb070781a3108d09'
-for a in area:
-    province = a['province']
-    for l in a['lower']:
-        city = l['city']
-
-        try:
-            for d in l['lower']:
-                for c in code:
-                    headers = {'content-type': 'application/json', 'Host': '123.56.115.168'}
-                    origin_url = 'http://restapi.amap.com/v3/place/text?city=%s&keywords=%s' % (city, d) + \
-                                 '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], 1) + \
-                                 '&key=' + key + '&extensions=all'
-                    api_result = requests.get(origin_url, headers=headers).json()
-                    if api_result["status"] == '0':
-                        raise Exception(api_result['info'])
-                    else:
-                        pass
-                    # if api_result["status"] == '0':
-                    #
-                    #     if keys.index(key) < 12:
-                    #         key = keys[keys.index(key) + 1]
-                    #     else:
-                    #         print('oh~oh~,key用完了....')
-                    count = int(api_result['count'])
-                    if count == 0:
-                        pass
-                    elif count > 50:
-                        if count % 50 == 0:
-                            page = count // 50
-                        else:
-                            page = count // 50 + 1
-                        for p in range(1, page + 1):
-                            url = 'http://restapi.amap.com/v3/place/text?city=%s&keywords=%s' % (city, d) + \
-                                  '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], p) + \
-                                  '&key=' + key + '&extensions=all'
-                            api_result = requests.get(url, headers=headers).json()
-                            if api_result["status"] == '0':
-                                raise Exception(api_result['info'])
-                            else:
-                                pass
-                            # if api_result["status"] == '0':
-                            #     if keys.index(key) < 12:
-                            #         key = keys[keys.index(key) + 1]
-                            #     else:
-                            #         print('oh~oh~,key用完了....')
-                            for a in api_result['pois']:
-                                result = {
-                                    "province": a["pname"],
-                                    "city": a["cityname"],
-                                    "district": a["adname"],
-                                    "name": a["name"],
-                                    "type": c['mean'],
-                                    "address": a["address"],
-                                    "location": a["location"],
-                                }
-                                collection.insert(result)
-                    else:
-                        for a in api_result['pois']:
-                            result = {
-                                "province": a["pname"],
-                                "city": a["cityname"],
-                                "district": a["adname"],
-                                "name": a["name"],
-                                "type": c['mean'],
-                                "address": a["address"],
-                                "location": a["location"],
-                            }
-                            collection.insert(result)
-        except KeyError:
-            for c in code:
-                headers = {'content-type': 'application/json'}
-                origin_url = 'http://restapi.amap.com/v3/place/text?city=%s' % city + \
-                             '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], 1) + \
-                             '&key=' + key + '&extensions=all'
-                api_result = requests.get(origin_url, headers=headers).json()
-                if api_result["status"] == '0':
-                    raise Exception(api_result['info'])
-                else:
-                    pass
-                # if api_result["status"] == '0':
-                #     if keys.index(key) < 12:
-                #         key = keys[keys.index(key) + 1]
-                #     else:
-                #         print('oh~oh~,key用完了....')
-                count = int(api_result['count'])
-                if count == 0:
-                    pass
-                elif count > 50:
-                    if count % 50 == 0:
-                        page = count // 50
-                    else:
-                        page = count // 50 + 1
-                    for p in range(1, page + 1):
-                        url = 'http://restapi.amap.com/v3/place/text?city=%s' % city + \
-                              '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], p) + \
-                              '&key=' + key + '&extensions=all'
-                        api_result = requests.get(url, headers=headers).json()
-                        if api_result["status"] == '0':
-                            raise Exception(api_result['info'])
-                        else:
-                            pass
-                        # if api_result["status"] == '0':
-                        #     if keys.index(key) < 12:
-                        #         key = keys[keys.index(key) + 1]
-                        #     else:
-                        #         print('oh~oh~,key用完了....')
-                        for a in api_result['pois']:
-                            result = {
-                                "province": a["pname"],
-                                "city": a["cityname"],
-                                "district": a["adname"],
-                                "name": a["name"],
-                                "type": c['mean'],
-                                "address": a["address"],
-                                "location": a["location"],
-                            }
-                            collection.insert(result)
-                else:
-                    for a in api_result['pois']:
-                        result = {
-                            "province": a["pname"],
-                            "city": a["cityname"],
-                            "district": a["adname"],
-                            "name": a["name"],
-                            "type": c['mean'],
-                            "address": a["address"],
-                            "location": a["location"],
-                        }
-                        collection.insert(result)
+key = '8734a771f5a4a097a43e96d42f1cc393'
+fail_list = []
+for s in special:
+    if '（' in s:
+        name = re.split(r'[（）]', s)[0]
+        city = re.split(r'[（）]', s)[1]
+    else:
+        name = s
+        city = ''
+    url = 'http://restapi.amap.com/v3/place/text?key=' + key +'&keywords='+ name +\
+          '&types=高等院校&city=' + city + '&children=&offset=20&page=1&extensions=base'
+    result = requests.get(url).json()
+    if int(result["status"]) == 1:
+        if int(result["count"]) == 0:
+            fail_list.append({"name": name, "city": city})
+        else:
+            if city == '':
+                data = {
+                    "city": city,
+                    "name": name,
+                    "type": '高等院校',
+                    "address": result["pois"][0]["address"],
+                    "location": result["pois"][0]["location"],
+                }
+            else:
+                data = {
+                    "name": name,
+                    "type": '高等院校',
+                    "address": result["pois"][0]["address"],
+                    "location": result["pois"][0]["location"],
+                }
+            collection.insert(data)
+    else:
+        fail_list.append({"name": name, "city": city})
+        raise Exception(result["info"])
+print(fail_list)
+# for a in area:
+#     province = a['province']
+#     for l in a['lower']:
+#         city = l['city']
+#
+#         try:
+#             for d in l['lower']:
+#                 for c in code:
+#                     headers = {'content-type': 'application/json', 'Host': '123.56.115.168'}
+#                     origin_url = 'http://restapi.amap.com/v3/place/text?city=%s&keywords=%s' % (city, d) + \
+#                                  '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], 1) + \
+#                                  '&key=' + key + '&extensions=all'
+#                     api_result = requests.get(origin_url, headers=headers).json()
+#                     if api_result["status"] == '0':
+#                         raise Exception(api_result['info'])
+#                     else:
+#                         pass
+#                     # if api_result["status"] == '0':
+#                     #
+#                     #     if keys.index(key) < 12:
+#                     #         key = keys[keys.index(key) + 1]
+#                     #     else:
+#                     #         print('oh~oh~,key用完了....')
+#                     count = int(api_result['count'])
+#                     if count == 0:
+#                         pass
+#                     elif count > 50:
+#                         if count % 50 == 0:
+#                             page = count // 50
+#                         else:
+#                             page = count // 50 + 1
+#                         for p in range(1, page + 1):
+#                             url = 'http://restapi.amap.com/v3/place/text?city=%s&keywords=%s' % (city, d) + \
+#                                   '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], p) + \
+#                                   '&key=' + key + '&extensions=all'
+#                             api_result = requests.get(url, headers=headers).json()
+#                             if api_result["status"] == '0':
+#                                 raise Exception(api_result['info'])
+#                             else:
+#                                 pass
+#                             # if api_result["status"] == '0':
+#                             #     if keys.index(key) < 12:
+#                             #         key = keys[keys.index(key) + 1]
+#                             #     else:
+#                             #         print('oh~oh~,key用完了....')
+#                             for a in api_result['pois']:
+#                                 result = {
+#                                     "province": a["pname"],
+#                                     "city": a["cityname"],
+#                                     "district": a["adname"],
+#                                     "name": a["name"],
+#                                     "type": c['mean'],
+#                                     "address": a["address"],
+#                                     "location": a["location"],
+#                                 }
+#                                 collection.insert(result)
+#                     else:
+#                         for a in api_result['pois']:
+#                             result = {
+#                                 "province": a["pname"],
+#                                 "city": a["cityname"],
+#                                 "district": a["adname"],
+#                                 "name": a["name"],
+#                                 "type": c['mean'],
+#                                 "address": a["address"],
+#                                 "location": a["location"],
+#                             }
+#                             collection.insert(result)
+#         except KeyError:
+#             for c in code:
+#                 headers = {'content-type': 'application/json'}
+#                 origin_url = 'http://restapi.amap.com/v3/place/text?city=%s' % city + \
+#                              '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], 1) + \
+#                              '&key=' + key + '&extensions=all'
+#                 api_result = requests.get(origin_url, headers=headers).json()
+#                 if api_result["status"] == '0':
+#                     raise Exception(api_result['info'])
+#                 else:
+#                     pass
+#                 # if api_result["status"] == '0':
+#                 #     if keys.index(key) < 12:
+#                 #         key = keys[keys.index(key) + 1]
+#                 #     else:
+#                 #         print('oh~oh~,key用完了....')
+#                 count = int(api_result['count'])
+#                 if count == 0:
+#                     pass
+#                 elif count > 50:
+#                     if count % 50 == 0:
+#                         page = count // 50
+#                     else:
+#                         page = count // 50 + 1
+#                     for p in range(1, page + 1):
+#                         url = 'http://restapi.amap.com/v3/place/text?city=%s' % city + \
+#                               '&types=%s&citylimit=true&output=json&offset=50&page=%s' % (c['number'], p) + \
+#                               '&key=' + key + '&extensions=all'
+#                         api_result = requests.get(url, headers=headers).json()
+#                         if api_result["status"] == '0':
+#                             raise Exception(api_result['info'])
+#                         else:
+#                             pass
+#                         # if api_result["status"] == '0':
+#                         #     if keys.index(key) < 12:
+#                         #         key = keys[keys.index(key) + 1]
+#                         #     else:
+#                         #         print('oh~oh~,key用完了....')
+#                         for a in api_result['pois']:
+#                             result = {
+#                                 "province": a["pname"],
+#                                 "city": a["cityname"],
+#                                 "district": a["adname"],
+#                                 "name": a["name"],
+#                                 "type": c['mean'],
+#                                 "address": a["address"],
+#                                 "location": a["location"],
+#                             }
+#                             collection.insert(result)
+#                 else:
+#                     for a in api_result['pois']:
+#                         result = {
+#                             "province": a["pname"],
+#                             "city": a["cityname"],
+#                             "district": a["adname"],
+#                             "name": a["name"],
+#                             "type": c['mean'],
+#                             "address": a["address"],
+#                             "location": a["location"],
+#                         }
+#                         collection.insert(result)
