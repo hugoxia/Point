@@ -9,7 +9,7 @@ cmds += cmds
 cmds += cmds
 #cmds += cmds
 while True:
-    pool = ThreadPool(4)
+    pool = ThreadPool(5)
     pool.map(os.system, cmds)
     pool.close()
     pool.join()
