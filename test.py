@@ -40,10 +40,10 @@ def index():
 def test():
     if request.method == 'POST':
         x_y = request.form['x_y']
-        url_address = 'http://restapi.amap.com/v3/geocode/regeo?key=8734a771f5a4a097a43e96d42f1cc393&location=' + \
+        url_address = 'http://restapi.amap.com/v3/geocode/regeo?key=fe44aff795f5c287eb070781a3108d09&location=' + \
                       x_y + '&poitype=141201|141202|141203|141206' + \
                       '&extensions=all&batch=false&roadlevel=1'
-        url = 'http://restapi.amap.com/v3/place/around?key=8734a771f5a4a097a43e96d42f1cc393&' \
+        url = 'http://restapi.amap.com/v3/place/around?key=fe44aff795f5c287eb070781a3108d09&' \
               'location={0}&radius=300&keywords=&types=141201|141202|141203|141206&' \
               'offset=50&page=1&extensions=base'.format(x_y)
         address = requests.get(url_address).json()
