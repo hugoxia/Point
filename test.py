@@ -11,8 +11,8 @@ from flask import request
 from pymongo import MongoClient
 
 app = Flask(__name__)
-client = MongoClient('192.168.1.90', 27017)
-collection = client.test.schools
+client = MongoClient('localhost', 27017)
+collection = client.school.test_schools
 
 
 def rad(d):
@@ -40,60 +40,77 @@ def index():
 def test():
     if request.method == 'POST':
         x_y = request.form['x_y']
-        lat1 = re.split(',', x_y)[0]
-        lng1 = re.split(',', x_y)[1]
-        url_address = 'http://restapi.amap.com/v3/geocode/regeo?key=2f9fd93a6d483072ae4379dd371a2425&location=' + \
-                      lat1 + ',' + lng1 + '&poitype=141201|141202|141203|141206' + \
-                      '&extensions=all&batch=true&roadlevel=1'
-        url = 'http://restapi.amap.com/v3/place/around?key=2f9fd93a6d483072ae4379dd371a2425&location=' \
-              + lat1 + ',' + lng1 + \
-              '&radius=300&keywords=&types=141201|141202|141203|141206&offset=50&page=1&extensions=base'
+        url_address = 'http://restapi.amap.com/v3/geocode/regeo?key=8734a771f5a4a097a43e96d42f1cc393&location=' + \
+                      x_y + '&poitype=141201|141202|141203|141206' + \
+                      '&extensions=all&batch=false&roadlevel=1'
+        url = 'http://restapi.amap.com/v3/place/around?key=8734a771f5a4a097a43e96d42f1cc393&' \
+              'location={0}&radius=300&keywords=&types=141201|141202|141203|141206&' \
+              'offset=50&page=1&extensions=base'.format(x_y)
         address = requests.get(url_address).json()
         addr = {}
-        addr["name"] = address["regeocodes"][0]["formatted_address"]
-        try:
-            addr["keyword"] = address["regeocodes"][0]["aois"][0]["name"]
-        except IndexError:
-            addr["keyword"] = None
-        print(url)
-        r = requests.get(url)
-        t = r.json()
+        if address['status'] == "1":
+            for element in ["province", "city", "district"]:
+                try:
+                    addr[element] = address["regeocode"]["addressComponent"][element]
+                except IndexError or KeyError:
+                    addr[element] = []
+            try:
+                addr["keyword"] = address["regeocode"]["aois"][0]["name"]
+            except IndexError or KeyError:
+                addr["keyword"] = None
+            if addr['city'] == []:
+                addr['city'] = addr['province']
+        else:
+            raise Exception(address['info'])
         get_school = []
         if addr["keyword"] is not None:
             get_school.append(addr["keyword"])
-        for s in t["pois"]:
-            get_school.append(s['name'].replace('-', ''))
-        result = collection.find({}, {"city": 1, "name": 1, "_id": 1, "location": 1})
+        school_name = requests.get(url).json()
+
+        if school_name['status'] == "1":
+            try:
+                pois = school_name["pois"]
+            except IndexError or KeyError:
+                pois = None
+        else:
+            raise Exception(school_name['info'])
+        if pois is None or pois == []:
+            pass
+        else:
+            for s in pois:
+                if '网络教育' in s['name'] or '继续教育' in s['name'] or '远程教育' in s['name'] or '仙桃学院' in s['name']  or '纺织服装学院' in s['name'] or '教学部' in s['name']:
+                    continue
+                else:
+                    get_school.append(s['name'].replace('-', ''))
+        result = collection.find({
+            "city": addr["city"]
+        }, {"name": 1, "_id": 0})
+        print(result.count())
+
         data = []
-        second = []
-        for r in result:
-            data.append(r['name'])
+        schools = []
+        for element in result:
+            data.append(element['name'])
+        print(data)
         for element in get_school:
             match_list = []
             for i in data:
-                if i in element:
+                if element.startswith(i) or (i.endswith(element) and i[0:2] == "上海"):
                     match_list.append(i)
                 else:
                     continue
             if len(match_list) > 0:
-                second.append(match_list[0])
+                schools.append(match_list[0])
             else:
                 pass
-
+        print(len(schools))
         f = lambda x, y: x if y in x else x + [y]
+        schools = reduce(f, [[], ] + schools)
+        if schools == []:
+            schools.append(addr['city'])
 
-        second = reduce(f, [[], ] + second)
-        print(get_school)
-        print(second)
-        if len(get_school) == 0:
-            get_school = None
-
-        if len(second) == 0:
-            second = None
-
-    return render_template('test.html', x_y=x_y, first=get_school, second=second, address=addr)
+    return render_template('test.html', x_y=x_y, first=get_school, second=schools, address=addr['province']+addr['city'])
 
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=9999)
-
