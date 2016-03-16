@@ -12,7 +12,7 @@ from pymongo import MongoClient
 
 app = Flask(__name__)
 client = MongoClient('localhost', 27017)
-collection = client.school.test_schools
+collection = client.data.test_schools
 
 
 def rad(d):
@@ -32,6 +32,7 @@ def distance(lat1, lng1, lat2, lng2):
 
 
 black_list = ('网络教育', '继续教育', '远程教育', '仙桃学院', '纺织服装学院', '教学部', '分部')
+
 
 def guolv(t):
     for i in black_list:
