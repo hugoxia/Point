@@ -31,6 +31,13 @@ def distance(lat1, lng1, lat2, lng2):
     return abs(s)
 
 
+black_list = ('网络教育', '继续教育', '远程教育', '仙桃学院', '纺织服装学院', '教学部', '分部')
+
+def guolv(t):
+    for i in black_list:
+        return False if i in t else True
+
+
 @app.route('/')
 def index():
     return render_template('test.html', x_y=None, first=None, second=None, address=None)
@@ -48,6 +55,7 @@ def test():
               'offset=50&page=1&extensions=base'.format(x_y)
         address = requests.get(url_address).json()
         addr = {}
+        get_school = ()
         if address['status'] == "1":
             for element in ["province", "city", "district"]:
                 try:
@@ -60,13 +68,12 @@ def test():
                 addr["keyword"] = None
             if addr['city'] == []:
                 addr['city'] = addr['province']
+                addr['name'] = addr['province']+addr['city']
         else:
             raise Exception(address['info'])
-        get_school = []
         if addr["keyword"] is not None:
-            get_school.append(addr["keyword"])
+            get_school = (addr["keyword"],)
         school_name = requests.get(url).json()
-
         if school_name['status'] == "1":
             try:
                 pois = school_name["pois"]
@@ -77,21 +84,17 @@ def test():
         if pois is None or pois == []:
             pass
         else:
-            for s in pois:
-                if '网络教育' in s['name'] or '继续教育' in s['name'] or '远程教育' in s['name'] or '仙桃学院' in s['name']  or '纺织服装学院' in s['name'] or '教学部' in s['name']:
-                    continue
-                else:
-                    get_school.append(s['name'].replace('-', ''))
+            get_school += tuple(filter(guolv, (i['name'] for i in pois)))
+            print(get_school)
+            get_school = tuple(i.replace('-', '') for i in get_school)
         result = collection.find({
             "city": addr["city"]
         }, {"name": 1, "_id": 0})
-        print(result.count())
 
         data = []
         schools = []
         for element in result:
             data.append(element['name'])
-        print(data)
         for element in get_school:
             match_list = []
             for i in data:
@@ -103,13 +106,12 @@ def test():
                 schools.append(match_list[0])
             else:
                 pass
-        print(len(schools))
         f = lambda x, y: x if y in x else x + [y]
         schools = reduce(f, [[], ] + schools)
         if schools == []:
             schools.append(addr['city'])
 
-    return render_template('test.html', x_y=x_y, first=get_school, second=schools, address=addr['province']+addr['city'])
+    return render_template('test.html', x_y=x_y, first=get_school, second=schools, address=addr)
 
 
 if __name__ == '__main__':
